@@ -49,8 +49,27 @@
             </van-button>
         </div>
 
-        <div class="card quick-actions"></div>
-        <div class="card"></div>
+        <div class="card quick-actions">
+            <div class="section-title">
+                快捷入口
+            </div>
+            <van-grid column-num="2" :gutter="12">
+                <van-grid-item @click="goPage('/chat')" icon="chat-o" text="AI对话" />
+                <van-grid-item @click="goPage('/profile')" icon="user-o" text="我的" />
+            </van-grid>
+        </div>
+        <div class="card popular-destinations">
+            <div class="section-title">
+                热门目的地
+            </div>
+            <van-grid column-num="4" :gutter="8">
+                <van-grid-item @click="selectedCity(city)" v-for="(city,index) in popularCities" :key="index" >
+                    <div class="city-tag" :class="{active: formData.city === city}">
+                        {{city}}
+                    </div>
+                </van-grid-item>
+            </van-grid>
+        </div>
         </div>
         <!-- 城市选择器(弹窗) -->
         <van-popup
@@ -70,6 +89,7 @@
 
 <script setup>
     import {ref,reactive} from 'vue'
+    import {useRouter} from 'vue-router'
     const formData = reactive({
         city: '',
         budget: null,
@@ -86,6 +106,8 @@
         '西安', '兰州', '乌鲁木齐', '拉萨', '呼和浩特', '太原', '石家庄'
     ]
 
+    const popularCities = ['北京', '上海', '广州', '深圳', '成都', '杭州', '西安', '重庆']
+
     const cityColumns = allCities.map(city => ({ text: city ,value: city}))
 
     // 城市选择器确认回调
@@ -100,10 +122,34 @@
     const handleSearch = () => {
         isloading.value = true
     }
+    // 路由实例
+    const router = useRouter()
+
+    // 选择城市
+    const selectedCity = (city) => {
+        formData.city = city
+    }
+       
+    // 跳转页面
+    const goPage = (path) => {
+        router.push(path)
+    }
 </script>
 
 <style scoped>
     .search-card {
         margin-bottom: 16px;
+    }
+    .city-tag {
+        padding: 8px 12px;
+        border-radius: 16px;
+        font-size: 14px;
+        color: #666;
+        background: #f7f8fa;
+        transition: all 0.3s;
+    }
+    .city-tag.active {
+        background: #007AFF;
+        color: #fff;
     }
 </style>
