@@ -43,7 +43,7 @@
                 round
                 size="large"
                 :loading="isloading"
-                @click="handleSearch"
+                @click="handleSubmit"
             >
                 开始规划
             </van-button>
@@ -90,7 +90,9 @@
 <script setup>
     import {ref,reactive} from 'vue'
     import {useRouter} from 'vue-router'
-    const formData = reactive({
+    import {showDialog} from 'vant'
+
+       const formData = reactive({
         city: '',
         budget: null,
         days: null,
@@ -119,8 +121,32 @@
     // 加载状态
     const isloading = ref(false) 
     //提交表单
-    const handleSearch = () => {
+    const handleSubmit = async () => {
         isloading.value = true
+        // 判断目的地
+        if(!formData.city){
+            showDialog({ message: '请选择目的地' })
+            return
+        }
+        //判断预算
+        if(!formData.budget || formData.budget <100){
+            showDialog({ message: '预算不能低于100元' })
+            return
+        }
+        //判断天数
+        if(!formData.days || formData.days <1 || formData.days >30){
+            showDialog({ message: '天数必须在1~30天之间' })
+            return
+        }
+
+        router.push({
+            path: '/detail',
+            query: {
+                city: formData.city,
+                budget: formData.budget,
+                days: formData.days
+            }
+        })  
     }
     // 路由实例
     const router = useRouter()

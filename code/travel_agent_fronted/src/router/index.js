@@ -15,8 +15,12 @@ const routes=[
         path:'/profile',
         name:'Profile',
         component:()=>import('../views/Profile.vue')
+    },
+    {
+        path:'/detail',
+        name:'Detail',
+        component:()=>import('../views/Detail.vue')
     }
-
 ]
 
 const router=createRouter({
