@@ -26,7 +26,7 @@
             <van-field
                 v-model="inputMessage"
                 placeholder="输入您的问题"
-                :disabled="!inputMessage.trim()"
+                :disabled="isStreaming"
                 @keyup.enter="sendMessage"
             >
                 <template #button>
@@ -40,6 +40,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'
+import { fetchStream } from '../utils/request'
 
 const router = useRouter()
 
@@ -57,11 +58,15 @@ const messages = ref([])
 
 const inputMessage = ref('')
 
-const sendMessage = () => {}
+const sendMessage = () => {
+    fetchStream('chat',{message:inputMessage.value},() => {},() => {},() => {})
+}
 
 const onBack = () => {
     router.back()
 }
+//是否正在流式响应
+const isStreaming = ref(false)
 </script>
 
 
