@@ -9,7 +9,7 @@
                 @click-left="onBack"
             />
         </div>
-        <div class="chat-container">
+        <div class="chat-container" ref="chatContainer">
             <div v-if="messages.length === 0" class="chat-empty">
                 <van-empty
                     description="开始和AI助手对话吧!"
@@ -19,6 +19,13 @@
                     <van-tag @click="handleClickTag(q)" v-for="q in quickQuestions" :key="q" size="large" mark class="quick-tag">
                         {{ q }}
                     </van-tag>
+                </div>
+            </div>
+            <div v-else class="message-list">
+                <ChatBubble v-for="msg in messages" :key="msg.id" :message="msg" />
+                <div class="streaming-indicator" v-if="isStreaming">
+                    <van-loading type="spinner" size="20px"/>
+                    <span>AI正在思考中...</span>
                 </div>
             </div>
         </div>
@@ -38,11 +45,22 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { useRouter,useRoute } from 'vue-router'
+import { ref ,onMounted} from 'vue'
 import { fetchStream } from '../utils/request'
+import { showToast } from 'vant'
+import ChatBubble from '../components/ChatBubble.vue'
+
+const chatContainer = ref(null)
 
 const router = useRouter()
+//置底的方法
+const scrollToBottom = () => {
+    if(chatContainer.value){
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+    }
+}
+
 
 const quickQuestions = ref([
   '北京有哪些必去的景点？',
@@ -59,7 +77,48 @@ const messages = ref([])
 const inputMessage = ref('')
 
 const sendMessage = () => {
-    fetchStream('chat',{message:inputMessage.value},() => {},() => {},() => {})
+    const msg = inputMessage.value.trim()
+    if (!msg || isStreaming.value){
+        return
+    } 
+    addUserMessage(msg)
+    //清空输入框
+    inputMessage.value = ''
+
+    fetchAIResponse(msg)
+}
+//获取AI响应
+const fetchAIResponse = (userMsg) => {
+    isStreaming.value = true
+    messages.value.push({
+        id: Date.now() + 1,
+        role: 'ai',
+        content: '',
+        timestamp: new Date().toISOString()
+    })
+
+    let fullResponse = ''
+
+    fetchStream('chat',{message:userMsg},(chunk) => {
+        fullResponse += chunk
+        const lastMsg = messages.value[messages.value.length - 1]
+        if(lastMsg && lastMsg.role === 'ai'){
+            lastMsg.content = fullResponse
+        }
+        scrollToBottom()
+    },() => {
+        //AI响应完成
+        isStreaming.value = false
+        scrollToBottom()
+    },(errMsg) => {
+        const lastMsg = messages.value[messages.value.length - 1]
+        if(lastMsg && lastMsg.role === 'ai'){
+            lastMsg.content = '抱歉,AI发生了错误: ${errMsg}'
+        }
+        isStreaming.value = false
+        showToast('ai回复失败')
+        scrollToBottom()
+    })
 }
 
 const onBack = () => {
@@ -67,20 +126,40 @@ const onBack = () => {
 }
 //是否正在流式响应
 const isStreaming = ref(false)
+
+//用户发送消息
+const addUserMessage = (content) => {
+    messages.value.push({
+        id: Date.now(),
+        role: 'user',
+        content,
+        timestamp: new Date().toISOString()
+    })
+}
+
+const route = useRoute()
+onMounted(() => {
+    if(route.query.scene === 'detail' && route.query.city){
+        inputMessage.value = `我想了解一下${route.query.city}的旅游景点`
+    }
+})
 </script>
 
 
 
 <style scoped>
+    .page-header{
+        height: 46px;
+    }
     .chat-page {
         display: flex;
         flex-direction: column;
         height: 100vh;
-        padding-bottom: 50px;
+        padding-bottom:0px !important;
     }
 
     .chat-container {
-        flex: 1;
+        height: 650px;
         overflow-y: auto;
         padding: 16px;
         padding-bottom: 60px;

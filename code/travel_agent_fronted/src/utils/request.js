@@ -81,9 +81,8 @@ export async function fetchStream(url,data,onChunk,onComplete,onError){
                         onError('流式数据解析异常')
                     }
                 }
-
-                return controller.abort()
             }
+            return controller.abort()
     }catch(error){
         onError(error,message)
     }
