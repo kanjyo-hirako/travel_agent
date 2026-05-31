@@ -1,10 +1,12 @@
 import axios from 'axios'
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '') + '/api/travel'
+
 const request = axios.create({
-    baseURL:'http://127.0.0.1:3300/api/travel',
-    timeout:60000,
-    headers:{
-        'Content-Type':'application/json'
+    baseURL: API_BASE,
+    timeout: 60000,
+    headers: {
+        'Content-Type': 'application/json'
     }
 })
 
@@ -43,7 +45,7 @@ export async function fetchStream(url,data,onChunk,onComplete,onError){
 
     try{
         //发送请求
-        const response = await fetch(`http://127.0.0.1:3300/api/travel/${url}`,{
+        const response = await fetch(`${API_BASE}/${url}`,{
             method:'POST',
             headers:{
                 'Content-Type':'application/json'

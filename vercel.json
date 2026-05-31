@@ -1,0 +1,8 @@
+{
+    "buildCommand": "cd code/travel_agent_fronted && npm install && npm run build",
+    "outputDirectory": "code/travel_agent_fronted/dist",
+    "framework": null,
+    "rewrites": [
+        { "source": "/api/(.*)", "destination": "/api/$1" }
+    ]
+}
