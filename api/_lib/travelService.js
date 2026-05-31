@@ -2,7 +2,7 @@ import { ChatOpenAI } from '@langchain/openai'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 
 function createLLM() {
-    const provider = process.env.MODEL_PROVIDER
+    const provider = (process.env.MODEL_PROVIDER || '').trim().toUpperCase()
     let apikey, baseURL, model
 
     if (provider === 'SILICONFLOW') {
@@ -14,6 +14,14 @@ function createLLM() {
         baseURL = process.env.DEEPSEEK_BASE_URL
         model = process.env.DEEPSEEK_MODEL
     }
+
+    console.log('[LLM Config]', {
+        provider,
+        baseURL,
+        model,
+        hasApiKey: !!apikey,
+        apiKeyPrefix: apikey ? apikey.substring(0, 6) + '...' : 'undefined'
+    })
 
     return new ChatOpenAI({
         configuration: { baseURL },
