@@ -2,7 +2,8 @@
 
 # 智能旅游助手 Travel Agent
 
-**基于 AI 的智能景点介绍与行程规划系统**
+**基于 AI 的智能景点介绍与行程规划系统**<br/>
+**已在vercel上部署，直接访问->https://travel-agent-two-lovat.vercel.app/**
 
 ![Vue](https://img.shields.io/badge/Vue%203-3.5.34-4FC08D?style=flat-square&logo=vue.js&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8.0.12-646CFF?style=flat-square&logo=vite&logoColor=white)
