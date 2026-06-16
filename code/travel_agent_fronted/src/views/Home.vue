@@ -91,6 +91,7 @@
     import {ref,reactive} from 'vue'
     import {useRouter} from 'vue-router'
     import {showDialog} from 'vant'
+    import {checkLogin} from '../utils/auth'
 
        const formData = reactive({
         city: '',
@@ -122,6 +123,7 @@
     const isloading = ref(false) 
     //提交表单
     const handleSubmit = async () => {
+        if (!checkLogin(router)) return
         isloading.value = true
         // 判断目的地
         if(!formData.city){

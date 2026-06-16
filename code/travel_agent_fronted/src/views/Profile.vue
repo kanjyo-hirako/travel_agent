@@ -35,11 +35,11 @@
           :icon="'history'"
           @click="showToast('功能开发中')"
         />
-        <van-cell 
-          title="设置" 
-          is-link 
-          :icon="'settings'"
-          @click="showToast('功能开发中')"
+        <van-cell
+          title="退出登录"
+          is-link
+          :icon="'close'"
+          @click="handleLogout"
         />
       </van-cell-group>
     </div>
@@ -78,11 +78,16 @@
 
 <script setup>
 import { ref } from 'vue'
-import { showToast } from 'vant'
+import { useRouter } from 'vue-router'
+import { showToast, showDialog } from 'vant'
+import { getUser, logout } from '../utils/auth'
+
+const router = useRouter()
 
 // 用户信息
 const userAvatar = 'https://img.yzcdn.cn/vant/cat.jpeg'
-const userName = '游客'
+const user = getUser()
+const userName = user ? user.username : '游客'
 
 // 对话框状态
 const aboutDialogVisible = ref(false)
@@ -90,6 +95,19 @@ const aboutDialogVisible = ref(false)
 // 显示关于我们对话框
 const showAboutDialog = () => {
   aboutDialogVisible.value = true
+}
+
+// 退出登录
+const handleLogout = () => {
+  showDialog({
+    title: '提示',
+    message: '确定退出登录吗？',
+    showCancelButton: true
+  }).then(() => {
+    logout()
+    showToast('已退出登录')
+    router.push('/login')
+  }).catch(() => {})
 }
 </script>
 

@@ -50,6 +50,7 @@ import { ref ,onMounted} from 'vue'
 import { fetchStream } from '../utils/request'
 import { showToast } from 'vant'
 import ChatBubble from '../components/ChatBubble.vue'
+import {checkLogin} from '../utils/auth'
 
 const chatContainer = ref(null)
 
@@ -77,6 +78,7 @@ const messages = ref([])
 const inputMessage = ref('')
 
 const sendMessage = () => {
+    if (!checkLogin(router)) return
     const msg = inputMessage.value.trim()
     if (!msg || isStreaming.value){
         return

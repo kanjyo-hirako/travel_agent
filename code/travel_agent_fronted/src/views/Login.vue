@@ -48,6 +48,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
+import { setUser } from '../utils/auth'
 
 const router = useRouter()
 const loading = ref(false)
@@ -60,7 +61,8 @@ const form = reactive({
 const onSubmit = async () => {
   loading.value = true
   try {
-    // 登录逻辑后续接入
+    // 登录逻辑后续接入，暂时直接本地存储
+    setUser({ username: form.username })
     showToast('登录成功')
     router.push('/profile')
   } catch {
