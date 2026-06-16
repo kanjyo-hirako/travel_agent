@@ -8,16 +8,45 @@
     
     <!-- 用户信息区域 -->
     <div class="user-info">
-      <van-image 
-        :src="userAvatar" 
-        round 
+      <van-image
+        :src="userAvatar"
+        round
         class="avatar"
+        @click="onAvatarClick"
       />
       <div class="user-details">
         <h2 class="user-name">{{ userName }}</h2>
         <p class="user-desc">欢迎使用智能旅游助手</p>
+        <van-button
+          v-if="!user"
+          round
+          size="small"
+          class="login-btn"
+          @click="router.push('/login')"
+        >
+          登录
+        </van-button>
       </div>
     </div>
+
+    <!-- 头像上传弹窗 -->
+    <van-popup
+      v-model:show="showAvatarPopup"
+      round
+      position="bottom"
+      :style="{ padding: '20px' }"
+    >
+      <div class="avatar-popup-title">更换头像</div>
+      <van-uploader
+        :after-read="onAvatarUpload"
+        :max-size="5 * 1024 * 1024"
+        @oversize="onOversize"
+        accept="image/*"
+        max-count="1"
+      >
+        <van-button icon="plus" type="primary" block>选择图片</van-button>
+      </van-uploader>
+    </van-popup>
     
     <!-- 功能菜单 -->
     <div class="menu-section">
@@ -80,21 +109,45 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showDialog } from 'vant'
-import { getUser, logout } from '../utils/auth'
+import { getUser, logout, updateUser } from '../utils/auth'
 
 const router = useRouter()
 
 // 用户信息
-const userAvatar = 'https://img.yzcdn.cn/vant/cat.jpeg'
+const defaultAvatar = 'https://img.yzcdn.cn/vant/cat.jpeg'
 const user = getUser()
+const userAvatar = ref(user?.avatar || defaultAvatar)
 const userName = user ? user.username : '游客'
 
 // 对话框状态
 const aboutDialogVisible = ref(false)
+const showAvatarPopup = ref(false)
 
 // 显示关于我们对话框
 const showAboutDialog = () => {
   aboutDialogVisible.value = true
+}
+
+// 点击头像
+const onAvatarClick = () => {
+  if (!user) {
+    showToast('请先登录')
+    return
+  }
+  showAvatarPopup.value = true
+}
+
+// 头像上传完成
+const onAvatarUpload = (file) => {
+  userAvatar.value = file.content
+  updateUser({ avatar: file.content })
+  showAvatarPopup.value = false
+  showToast('头像更新成功')
+}
+
+// 文件过大提示
+const onOversize = () => {
+  showToast('图片大小不能超过5MB')
 }
 
 // 退出登录
@@ -145,6 +198,13 @@ const handleLogout = () => {
   opacity: 0.9;
 }
 
+.login-btn {
+  margin-top: 8px;
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
 .menu-section {
   margin-top: 15px;
   background-color: white;
@@ -175,5 +235,12 @@ const handleLogout = () => {
 
 .text-center {
   text-align: center;
+}
+
+.avatar-popup-title {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 16px;
 }
 </style>

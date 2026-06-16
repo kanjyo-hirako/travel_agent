@@ -15,6 +15,13 @@ export function setUser(user) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(user))
 }
 
+export function updateUser(partial) {
+  const user = getUser()
+  if (user) {
+    localStorage.setItem(AUTH_KEY, JSON.stringify({ ...user, ...partial }))
+  }
+}
+
 export function logout() {
   localStorage.removeItem(AUTH_KEY)
 }
