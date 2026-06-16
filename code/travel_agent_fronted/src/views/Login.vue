@@ -1,5 +1,11 @@
 <template>
   <div class="login-container">
+    <van-nav-bar
+      title=""
+      right-text="退出"
+      class="login-nav"
+      @click-right="router.back()"
+    />
     <div class="login-header">
       <h1 class="login-title">智能旅游助手</h1>
       <p class="login-subtitle">登录以使用完整功能</p>
@@ -45,12 +51,19 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { setUser } from '../utils/auth'
 
 const router = useRouter()
+
+onMounted(() => {
+  document.body.style.overflow = 'hidden'
+})
+onUnmounted(() => {
+  document.body.style.overflow = ''
+})
 const loading = ref(false)
 
 const form = reactive({
@@ -75,13 +88,26 @@ const onSubmit = async () => {
 
 <style scoped>
 .login-container {
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(135deg, #1989fa 0%, #36cbcb 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  position: relative;
+}
+
+.login-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: transparent;
+}
+
+.login-nav :deep(.van-nav-bar__text) {
+  color: white;
 }
 
 .login-header {

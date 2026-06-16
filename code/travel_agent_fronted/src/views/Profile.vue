@@ -26,6 +26,15 @@
         >
           登录
         </van-button>
+        <van-button
+          v-else
+          round
+          size="small"
+          class="logout-btn"
+          @click="handleLogout"
+        >
+          退出登录
+        </van-button>
       </div>
     </div>
 
@@ -64,12 +73,6 @@
           :icon="'history'"
           @click="showToast('功能开发中')"
         />
-        <van-cell
-          title="退出登录"
-          is-link
-          :icon="'close'"
-          @click="handleLogout"
-        />
       </van-cell-group>
     </div>
     
@@ -77,31 +80,17 @@
     <div class="menu-section">
       <h3 class="menu-title">关于</h3>
       <van-cell-group>
-        <van-cell 
-          title="关于我们" 
-          is-link 
-          @click="showAboutDialog"
+        <van-cell
+          title="关于我们"
+          is-link
+          @click="showAbout"
         />
-        <van-cell 
-          title="版本信息" 
+        <van-cell
+          title="版本信息"
           value="v1.0.0"
         />
       </van-cell-group>
     </div>
-    
-    <!-- 关于我们对话框 -->
-    <van-dialog 
-      v-model:show="aboutDialogVisible" 
-      title="关于我们"
-      show-cancel-button
-    >
-      <div class="about-content">
-        <p>智能旅游助手 v1.1.0</p>
-        <p class="mt-2">基于 AI 技术的智能旅游规划平台</p>
-        <p class="mt-2">为您提供个性化的旅游行程推荐和实时旅游咨询服务</p>
-        <p class="mt-4 text-center">© 2026 智能旅游助手</p>
-      </div>
-    </van-dialog>
   </div>
 </template>
 
@@ -120,12 +109,15 @@ const userAvatar = ref(user?.avatar || defaultAvatar)
 const userName = user ? user.username : '游客'
 
 // 对话框状态
-const aboutDialogVisible = ref(false)
 const showAvatarPopup = ref(false)
 
-// 显示关于我们对话框
-const showAboutDialog = () => {
-  aboutDialogVisible.value = true
+// 显示关于我们
+const showAbout = () => {
+  showDialog({
+    title: '关于我们',
+    message: '智能旅游助手 v1.1.0\n\n基于 AI 技术的智能旅游规划平台\n为您提供个性化的旅游行程推荐和实时旅游咨询服务\n\n© 2026 智能旅游助手',
+    confirmButtonText: '知道了'
+  })
 }
 
 // 点击头像
@@ -159,7 +151,7 @@ const handleLogout = () => {
   }).then(() => {
     logout()
     showToast('已退出登录')
-    router.push('/login')
+    router.go(0)
   }).catch(() => {})
 }
 </script>
@@ -203,6 +195,13 @@ const handleLogout = () => {
   background: transparent;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.logout-btn {
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .menu-section {
