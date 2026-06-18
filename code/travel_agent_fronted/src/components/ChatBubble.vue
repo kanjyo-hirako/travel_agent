@@ -6,19 +6,37 @@
         <template v-if="message.content">{{ message.content }}</template>
       </div>
     </div>
-    <div class="message-time" v-if="showTime">{{ formatTime }}</div>
+    <div class="bubble-footer">
+      <span class="message-time" v-if="showTime">{{ formatTime }}</span>
+      <van-icon
+        v-if="message.role === 'ai' && message.content"
+        :name="favorited ? 'star' : 'star-o'"
+        :color="favorited ? '#ff976a' : '#c8c9cc'"
+        size="16"
+        class="fav-icon"
+        @click.stop="toggleFavorite"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { showToast } from 'vant'
+import { isLoggedIn, addMessageFavorite, removeMessageFavorite, isMessageFavorited, getMessageFavoriteId } from '../utils/auth'
 
 const props = defineProps({
   message: {
     type: Object,
     required: true
+  },
+  question: {
+    type: String,
+    default: ''
   }
 })
+
+const favVersion = ref(0)
 
 const messageClass = computed(() => {
   return props.message.role === 'user' ? 'user-message' : 'ai-message'
@@ -33,6 +51,28 @@ const formatTime = computed(() => {
   const date = new Date(props.message.timestamp)
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
 })
+
+const favorited = computed(() => {
+  favVersion.value // 触发依赖
+  if (!props.message.content || props.message.role !== 'ai') return false
+  return isMessageFavorited(props.message.content)
+})
+
+function toggleFavorite() {
+  if (!isLoggedIn()) {
+    showToast('请先登录')
+    return
+  }
+  if (favorited.value) {
+    const id = getMessageFavoriteId(props.message.content)
+    if (id) removeMessageFavorite(id)
+    showToast('已取消收藏')
+  } else {
+    addMessageFavorite(props.question, props.message.content)
+    showToast('已收藏')
+  }
+  favVersion.value++
+}
 </script>
 
 <style scoped>
@@ -75,8 +115,19 @@ const formatTime = computed(() => {
 .message-time {
   font-size: 11px;
   color: #999;
+  padding: 0 4px;
+}
+
+.bubble-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 4px;
   padding: 0 4px;
+}
+
+.fav-icon {
+  cursor: pointer;
 }
 
 .typing {

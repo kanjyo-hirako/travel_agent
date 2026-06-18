@@ -25,6 +25,11 @@ const routes=[
         path:'/detail',
         name:'Detail',
         component:()=>import('../views/Detail.vue')
+    },
+    {
+        path:'/favorites',
+        name:'Favorites',
+        component:()=>import('../views/Favorites.vue')
     }
 ]
 

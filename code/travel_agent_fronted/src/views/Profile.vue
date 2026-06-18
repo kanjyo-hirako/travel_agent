@@ -1,9 +1,9 @@
 <template>
   <div class="profile-container">
-    <van-nav-bar 
-      title="我的" 
-      left-text="" 
-      left-arrow="false"
+    <van-nav-bar
+      title="我的"
+      left-text=""
+      :left-arrow="false"
     />
     
     <!-- 用户信息区域 -->
@@ -61,11 +61,11 @@
     <div class="menu-section">
       <h3 class="menu-title">我的服务</h3>
       <van-cell-group>
-        <van-cell 
-          title="我的收藏" 
-          is-link 
+        <van-cell
+          title="我的收藏"
+          is-link
           :icon="'star-o'"
-          @click="showToast('功能开发中')"
+          @click="goFavorites"
         />
         <van-cell 
           title="历史记录" 
@@ -98,7 +98,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showDialog } from 'vant'
-import { getUser, logout, updateUser } from '../utils/auth'
+import { getUser, logout, updateUser, checkLogin } from '../utils/auth'
 
 const router = useRouter()
 
@@ -110,6 +110,12 @@ const userName = user ? user.username : '游客'
 
 // 对话框状态
 const showAvatarPopup = ref(false)
+
+// 进入收藏页面
+const goFavorites = () => {
+  if (!checkLogin(router)) return
+  router.push('/favorites')
+}
 
 // 显示关于我们
 const showAbout = () => {

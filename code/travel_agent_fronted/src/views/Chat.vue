@@ -22,7 +22,12 @@
                 </div>
             </div>
             <div v-else class="message-list">
-                <ChatBubble v-for="msg in messages" :key="msg.id" :message="msg" />
+                <ChatBubble
+                  v-for="(msg, idx) in messages"
+                  :key="msg.id"
+                  :message="msg"
+                  :question="msg.role === 'ai' && idx > 0 && messages[idx - 1].role === 'user' ? messages[idx - 1].content : ''"
+                />
                 <div class="streaming-indicator" v-if="isStreaming">
                     <van-loading type="spinner" size="20px"/>
                     <span>AI正在思考中...</span>
@@ -51,6 +56,8 @@ import { fetchStream } from '../utils/request'
 import { showToast } from 'vant'
 import ChatBubble from '../components/ChatBubble.vue'
 import {checkLogin} from '../utils/auth'
+
+defineOptions({ name: 'Chat' })
 
 const chatContainer = ref(null)
 

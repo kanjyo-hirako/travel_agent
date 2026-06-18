@@ -1,13 +1,22 @@
 <template>
     <div class="page-container">
         <div class="page-header">
-            <van-nav-bar 
-            fixed 
-            left-text="返回" 
-            left-arrow 
-            @click-left="onBack"  
-            :title="formData.city + '行程规划'" 
-            />
+            <van-nav-bar
+            fixed
+            left-text="返回"
+            left-arrow
+            @click-left="onBack"
+            :title="formData.city + '行程规划'"
+            >
+            <template #right>
+                <van-icon
+                :name="tripFavorited ? 'star' : 'star-o'"
+                :color="tripFavorited ? '#ff976a' : '#323233'"
+                size="22"
+                @click="toggleTripFavorite"
+                />
+            </template>
+            </van-nav-bar>
         </div>
         <div class="page-content">
             <div v-if="isloading" class="loading-container">
@@ -40,15 +49,15 @@
                     <div class="day-schedule">
                         <div class="schedule-section">
                             <div class="section-label morning">上午</div>
-                            <SpotItem :data="day.morning" />
+                            <SpotItem :data="day.morning" :city="formData.city" />
                         </div>
                         <div class="schedule-section">
                             <div class="section-label afternoon">下午</div>
-                            <SpotItem :data="day.afternoon" />
+                            <SpotItem :data="day.afternoon" :city="formData.city" />
                         </div>
                         <div class="schedule-section">
                             <div class="section-label evening">晚上</div>
-                            <SpotItem :data="day.evening" />
+                            <SpotItem :data="day.evening" :city="formData.city" />
                         </div>
                     </div>
                     </van-collapse-item>
@@ -90,11 +99,13 @@
 </template>
 
 <script setup>
-    import {onMounted, reactive, ref} from 'vue'
+    import {onMounted, reactive, ref, computed} from 'vue'
     import {useRouter, useRoute} from 'vue-router'
+    import {showToast} from 'vant'
     import {post} from '../utils/request'
     import SpotItem from '../components/SpotItem.vue'
     import BudgetTable from '../components/BudgetTable.vue'
+    import { addTripFavorite, removeTripFavorite, isTripFavorited, getTripFavoriteId, checkLogin } from '../utils/auth'
     
     const isloading = ref(true)
 
@@ -107,6 +118,27 @@
     const tripData = ref(null)
 
     const errorMsg = ref('')
+
+    // 行程收藏状态
+    const favVersion = ref(0)
+    const tripFavorited = computed(() => {
+        favVersion.value
+        if (!tripData.value) return false
+        return isTripFavorited(tripData.value.city, tripData.value.days)
+    })
+
+    function toggleTripFavorite() {
+        if (!checkLogin(router)) return
+        if (tripFavorited.value) {
+            const id = getTripFavoriteId(tripData.value.city, tripData.value.days)
+            if (id) removeTripFavorite(id)
+            showToast('已取消收藏')
+        } else {
+            addTripFavorite(tripData.value)
+            showToast('已收藏')
+        }
+        favVersion.value++
+    }
 
     // 返回上一页
     function onBack() {
@@ -149,6 +181,18 @@
         formData.city = route.query.city
         formData.budget = route.query.budget
         formData.days = route.query.days
+
+        // 从收藏页跳转时优先使用缓存数据
+        if (route.query.fromFavorites === '1') {
+            const cacheKey = 'trip_cache_' + formData.city + '_' + formData.days
+            const cached = sessionStorage.getItem(cacheKey)
+            if (cached) {
+                tripData.value = JSON.parse(cached)
+                isloading.value = false
+                sessionStorage.removeItem(cacheKey)
+                return
+            }
+        }
 
         if(formData.city &&formData.budget &&formData.days){
             fetchTripData()

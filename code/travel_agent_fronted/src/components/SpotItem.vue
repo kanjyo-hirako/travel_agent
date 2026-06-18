@@ -1,6 +1,14 @@
 <template>
   <div class="spot-item" v-if="data">
-    <div class="spot-name">{{ data.spot || data.name || '待定' }}</div>
+    <div class="spot-name-row">
+      <span class="spot-name">{{ data.spot || data.name || '待定' }}</span>
+      <van-icon
+        :name="favorited ? 'like' : 'like-o'"
+        :color="favorited ? '#ee0a24' : '#c8c9cc'"
+        size="18"
+        @click.stop="toggleFavorite"
+      />
+    </div>
     <div class="spot-details" v-if="data.duration || data.ticket || data.transportation">
       <div class="detail-row" v-if="data.duration">
         <van-icon name="clock-o" size="14" />
@@ -23,12 +31,45 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed, ref } from 'vue'
+import { showToast } from 'vant'
+import { isLoggedIn, addSpotFavorite, removeSpotFavorite, isSpotFavorited, getSpotFavoriteId } from '../utils/auth'
+
+const props = defineProps({
   data: {
     type: Object,
     default: () => ({})
+  },
+  city: {
+    type: String,
+    default: ''
   }
 })
+
+const favVersion = ref(0)
+
+const spotName = computed(() => props.data?.spot || props.data?.name || '')
+const favorited = computed(() => {
+  favVersion.value
+  if (!spotName.value || !props.city) return false
+  return isSpotFavorited(spotName.value, props.city)
+})
+
+function toggleFavorite() {
+  if (!isLoggedIn()) {
+    showToast('请先登录')
+    return
+  }
+  if (favorited.value) {
+    const id = getSpotFavoriteId(spotName.value, props.city)
+    if (id) removeSpotFavorite(id)
+    showToast('已取消收藏')
+  } else {
+    addSpotFavorite(props.data, props.city)
+    showToast('已收藏')
+  }
+  favVersion.value++
+}
 </script>
 
 <style scoped>
@@ -40,11 +81,17 @@ defineProps({
   padding: 16px 0;
 }
 
+.spot-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
 .spot-name {
   font-size: 16px;
   font-weight: 600;
   color: #323233;
-  margin-bottom: 8px;
 }
 
 .spot-details {

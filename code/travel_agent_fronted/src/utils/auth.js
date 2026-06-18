@@ -52,3 +52,130 @@ export function checkLogin(router) {
   }
   return true
 }
+
+// ========== 收藏功能 ==========
+
+const FAVORITES_PREFIX = 'travel_agent_favorites_'
+
+function getFavoritesKey() {
+  const user = getUser()
+  if (!user) return null
+  return FAVORITES_PREFIX + user.username
+}
+
+export function getFavorites() {
+  const key = getFavoritesKey()
+  if (!key) return { trips: [], spots: [], messages: [] }
+  const raw = localStorage.getItem(key)
+  const data = raw ? JSON.parse(raw) : {}
+  return { trips: data.trips || [], spots: data.spots || [], messages: data.messages || [] }
+}
+
+function saveFavorites(data) {
+  const key = getFavoritesKey()
+  if (key) {
+    localStorage.setItem(key, JSON.stringify(data))
+  }
+}
+
+export function addTripFavorite(tripData) {
+  const fav = getFavorites()
+  const id = 'trip_' + Date.now()
+  const item = {
+    id,
+    city: tripData.city,
+    days: tripData.days,
+    totalBudget: tripData.totalBudget,
+    dailyItinerary: tripData.dailyItinerary,
+    budgetBreakdown: tripData.budgetBreakdown,
+    tips: tripData.tips,
+    warnings: tripData.warnings,
+    createdAt: Date.now()
+  }
+  fav.trips.unshift(item)
+  saveFavorites(fav)
+  return id
+}
+
+export function removeTripFavorite(id) {
+  const fav = getFavorites()
+  fav.trips = fav.trips.filter(t => t.id !== id)
+  saveFavorites(fav)
+}
+
+export function isTripFavorited(city, days) {
+  const fav = getFavorites()
+  return fav.trips.some(t => t.city === city && t.days === days)
+}
+
+export function getTripFavoriteId(city, days) {
+  const fav = getFavorites()
+  const trip = fav.trips.find(t => t.city === city && t.days === days)
+  return trip ? trip.id : null
+}
+
+export function addSpotFavorite(spot, city) {
+  const fav = getFavorites()
+  const id = 'spot_' + Date.now()
+  const item = {
+    id,
+    spot: spot.spot || spot.name,
+    duration: spot.duration,
+    ticket: spot.ticket,
+    transportation: spot.transportation,
+    description: spot.description,
+    city,
+    createdAt: Date.now()
+  }
+  fav.spots.unshift(item)
+  saveFavorites(fav)
+  return id
+}
+
+export function removeSpotFavorite(id) {
+  const fav = getFavorites()
+  fav.spots = fav.spots.filter(s => s.id !== id)
+  saveFavorites(fav)
+}
+
+export function isSpotFavorited(spotName, city) {
+  const fav = getFavorites()
+  return fav.spots.some(s => s.spot === spotName && s.city === city)
+}
+
+export function getSpotFavoriteId(spotName, city) {
+  const fav = getFavorites()
+  const spot = fav.spots.find(s => s.spot === spotName && s.city === city)
+  return spot ? spot.id : null
+}
+
+export function addMessageFavorite(question, content) {
+  const fav = getFavorites()
+  const id = 'msg_' + Date.now()
+  const item = {
+    id,
+    question,
+    content,
+    createdAt: Date.now()
+  }
+  fav.messages.unshift(item)
+  saveFavorites(fav)
+  return id
+}
+
+export function removeMessageFavorite(id) {
+  const fav = getFavorites()
+  fav.messages = fav.messages.filter(m => m.id !== id)
+  saveFavorites(fav)
+}
+
+export function isMessageFavorited(content) {
+  const fav = getFavorites()
+  return fav.messages.some(m => m.content === content)
+}
+
+export function getMessageFavoriteId(content) {
+  const fav = getFavorites()
+  const msg = fav.messages.find(m => m.content === content)
+  return msg ? msg.id : null
+}
