@@ -124,23 +124,23 @@
     //提交表单
     const handleSubmit = async () => {
         if (!checkLogin(router)) return
-        isloading.value = true
         // 判断目的地
         if(!formData.city){
-            showDialog({ message: '请选择目的地' })
+            showDialog({ message: '请选择目的地' }).catch(() => {})
             return
         }
         //判断预算
         if(!formData.budget || formData.budget <100){
-            showDialog({ message: '预算不能低于100元' })
+            showDialog({ message: '预算不能低于100元' }).catch(() => {})
             return
         }
         //判断天数
         if(!formData.days || formData.days <1 || formData.days >30){
-            showDialog({ message: '天数必须在1~30天之间' })
+            showDialog({ message: '天数必须在1~30天之间' }).catch(() => {})
             return
         }
 
+        isloading.value = true
         router.push({
             path: '/detail',
             query: {
@@ -148,7 +148,7 @@
                 budget: formData.budget,
                 days: formData.days
             }
-        })  
+        })
     }
     // 路由实例
     const router = useRouter()

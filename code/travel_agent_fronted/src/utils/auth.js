@@ -1,4 +1,5 @@
 import { showToast } from 'vant'
+import 'vant/es/toast/style/index.mjs'
 
 const AUTH_KEY = 'travel_agent_user'
 const PROFILE_PREFIX = 'travel_agent_profile_'
@@ -46,8 +47,12 @@ export function logout() {
  */
 export function checkLogin(router) {
   if (!isLoggedIn()) {
-    showToast('你还未登录！')
-    router.push('/login')
+    showToast({
+      message: '你还未登录！',
+      onClose: () => {
+        router.push('/login')
+      }
+    })
     return false
   }
   return true

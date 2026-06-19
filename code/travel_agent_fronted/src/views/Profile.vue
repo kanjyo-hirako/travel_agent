@@ -123,7 +123,7 @@ const showAbout = () => {
     title: '关于我们',
     message: '智能旅游助手 v1.1.0\n\n基于 AI 技术的智能旅游规划平台\n为您提供个性化的旅游行程推荐和实时旅游咨询服务\n\n© 2026 智能旅游助手',
     confirmButtonText: '知道了'
-  })
+  }).catch(() => {})
 }
 
 // 点击头像
