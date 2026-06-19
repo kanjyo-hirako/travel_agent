@@ -83,6 +83,34 @@
       </div>
       <div class="msg-detail-time">{{ formatTime(currentMsg.createdAt) }}</div>
     </van-popup>
+
+    <!-- 景点详情弹窗 -->
+    <van-popup v-model:show="showSpotPopup" position="bottom" round :style="{ maxHeight: '80%', padding: '20px' }">
+      <div class="spot-detail-title">{{ currentSpot.spot || '景点详情' }}</div>
+      <div class="spot-detail-city" v-if="currentSpot.city">
+        <van-icon name="location-o" size="14" />
+        <span>{{ currentSpot.city }}</span>
+      </div>
+      <div class="spot-detail-info">
+        <div class="info-item" v-if="currentSpot.duration">
+          <van-icon name="clock-o" size="16" />
+          <span>游览时长：{{ currentSpot.duration }}</span>
+        </div>
+        <div class="info-item" v-if="currentSpot.ticket">
+          <van-icon name="ticket-o" size="16" />
+          <span>门票价格：{{ currentSpot.ticket }}</span>
+        </div>
+        <div class="info-item" v-if="currentSpot.transportation">
+          <van-icon name="logistics" size="16" />
+          <span>交通方式：{{ currentSpot.transportation }}</span>
+        </div>
+      </div>
+      <div class="spot-detail-desc" v-if="currentSpot.description">
+        <div class="desc-label">景点介绍</div>
+        <div class="desc-content">{{ currentSpot.description }}</div>
+      </div>
+      <div class="spot-detail-time">收藏于 {{ formatTime(currentSpot.createdAt) }}</div>
+    </van-popup>
   </div>
 </template>
 
@@ -96,6 +124,8 @@ const router = useRouter()
 const activeTab = ref(0)
 const showMsgPopup = ref(false)
 const currentMsg = ref({})
+const showSpotPopup = ref(false)
+const currentSpot = ref({})
 
 const favorites = reactive({
   trips: [],
@@ -170,12 +200,8 @@ function openMsgDetail(msg) {
 }
 
 function goSpotDetail(spot) {
-  if (spot.city) {
-    router.push({
-      path: '/detail',
-      query: { city: spot.city, fromFavorites: '1' }
-    })
-  }
+  currentSpot.value = spot
+  showSpotPopup.value = true
 }
 
 function formatTime(ts) {
@@ -279,6 +305,71 @@ function formatTime(ts) {
 }
 
 .msg-detail-time {
+  text-align: right;
+  font-size: 12px;
+  color: #c8c9cc;
+  margin-top: 8px;
+}
+
+.spot-detail-title {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 8px;
+  color: #323233;
+}
+
+.spot-detail-city {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #969799;
+  margin-bottom: 20px;
+}
+
+.spot-detail-info {
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #323233;
+  padding: 8px 0;
+}
+
+.info-item:not(:last-child) {
+  border-bottom: 1px solid #ebedf0;
+}
+
+.spot-detail-desc {
+  margin-bottom: 16px;
+}
+
+.desc-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #323233;
+  margin-bottom: 8px;
+}
+
+.desc-content {
+  font-size: 14px;
+  color: #646566;
+  line-height: 1.6;
+  background: #f7f8fa;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.spot-detail-time {
   text-align: right;
   font-size: 12px;
   color: #c8c9cc;
