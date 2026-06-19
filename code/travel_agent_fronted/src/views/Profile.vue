@@ -67,11 +67,11 @@
           :icon="'star-o'"
           @click="goFavorites"
         />
-        <van-cell 
-          title="历史记录" 
-          is-link 
+        <van-cell
+          title="历史记录"
+          is-link
           :icon="'history'"
-          @click="showToast('功能开发中')"
+          @click="goHistory"
         />
       </van-cell-group>
     </div>
@@ -115,6 +115,12 @@ const showAvatarPopup = ref(false)
 const goFavorites = () => {
   if (!checkLogin(router)) return
   router.push('/favorites')
+}
+
+// 进入历史记录页面
+const goHistory = () => {
+  if (!checkLogin(router)) return
+  router.push('/history')
 }
 
 // 显示关于我们

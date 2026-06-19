@@ -184,3 +184,75 @@ export function getMessageFavoriteId(content) {
   const msg = fav.messages.find(m => m.content === content)
   return msg ? msg.id : null
 }
+
+// ========== 历史记录功能 ==========
+
+const HISTORY_PREFIX = 'travel_agent_history_'
+
+function getHistoryKey() {
+  const user = getUser()
+  if (!user) return null
+  return HISTORY_PREFIX + user.username
+}
+
+export function getHistory() {
+  const key = getHistoryKey()
+  if (!key) return { trips: [], chats: [] }
+  const raw = localStorage.getItem(key)
+  const data = raw ? JSON.parse(raw) : {}
+  return { trips: data.trips || [], chats: data.chats || [] }
+}
+
+function saveHistory(data) {
+  const key = getHistoryKey()
+  if (key) {
+    localStorage.setItem(key, JSON.stringify(data))
+  }
+}
+
+export function addTripHistory(tripData) {
+  const history = getHistory()
+  const id = 'trip_' + Date.now()
+  const item = {
+    id,
+    city: tripData.city,
+    budget: tripData.totalBudget || tripData.budget,
+    totalBudget: tripData.totalBudget || tripData.budget,
+    days: tripData.days,
+    dailyItinerary: tripData.dailyItinerary,
+    budgetBreakdown: tripData.budgetBreakdown,
+    tips: tripData.tips,
+    warnings: tripData.warnings,
+    createdAt: Date.now()
+  }
+  history.trips.unshift(item)
+  saveHistory(history)
+  return id
+}
+
+export function removeTripHistory(id) {
+  const history = getHistory()
+  history.trips = history.trips.filter(t => t.id !== id)
+  saveHistory(history)
+}
+
+export function addChatHistory(city, messages) {
+  const history = getHistory()
+  const id = 'chat_' + Date.now()
+  const item = {
+    id,
+    city,
+    messageCount: messages.length,
+    messages,
+    createdAt: Date.now()
+  }
+  history.chats.unshift(item)
+  saveHistory(history)
+  return id
+}
+
+export function removeChatHistory(id) {
+  const history = getHistory()
+  history.chats = history.chats.filter(c => c.id !== id)
+  saveHistory(history)
+}

@@ -105,7 +105,7 @@
     import {post} from '../utils/request'
     import SpotItem from '../components/SpotItem.vue'
     import BudgetTable from '../components/BudgetTable.vue'
-    import { addTripFavorite, removeTripFavorite, isTripFavorited, getTripFavoriteId, checkLogin } from '../utils/auth'
+    import { addTripFavorite, removeTripFavorite, isTripFavorited, getTripFavoriteId, checkLogin, addTripHistory } from '../utils/auth'
     
     const isloading = ref(true)
 
@@ -172,6 +172,7 @@
         isloading.value = false
         if(res && res.success !=false){
             tripData.value = res
+            addTripHistory(res)
         }else{
             errorMsg.value = res.error
         }
@@ -182,8 +183,8 @@
         formData.budget = route.query.budget
         formData.days = route.query.days
 
-        // 从收藏页跳转时优先使用缓存数据
-        if (route.query.fromFavorites === '1') {
+        // 从收藏页或历史记录页跳转时优先使用缓存数据
+        if (route.query.fromFavorites === '1' || route.query.fromHistory === '1') {
             const cacheKey = 'trip_cache_' + formData.city + '_' + formData.days
             const cached = sessionStorage.getItem(cacheKey)
             if (cached) {

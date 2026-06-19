@@ -55,7 +55,7 @@ import { ref ,onMounted} from 'vue'
 import { fetchStream } from '../utils/request'
 import { showToast } from 'vant'
 import ChatBubble from '../components/ChatBubble.vue'
-import {checkLogin} from '../utils/auth'
+import {checkLogin, addChatHistory} from '../utils/auth'
 
 defineOptions({ name: 'Chat' })
 
@@ -119,6 +119,9 @@ const fetchAIResponse = (userMsg) => {
         //AI响应完成
         isStreaming.value = false
         scrollToBottom()
+        // 记录对话历史
+        const city = route.query.city || ''
+        addChatHistory(city, [...messages.value])
     },(errMsg) => {
         const lastMsg = messages.value[messages.value.length - 1]
         if(lastMsg && lastMsg.role === 'ai'){
