@@ -8,4 +8,12 @@ import 'vant/es/toast/style/index.mjs'
 import 'vant/es/dialog/style/index.mjs'
 import './styles/common.css'
 
-createApp(App).use(router).use(Vant).mount('#app')//.use是注入，.mount是挂载
+const app = createApp(App)
+app.use(router).use(Vant).mount('#app')
+
+// Signal splash screen that Vue is ready
+if (window.__splashReady) {
+  window.dispatchEvent(new CustomEvent('splash:done'))
+} else {
+  window.__vueReady = true
+}

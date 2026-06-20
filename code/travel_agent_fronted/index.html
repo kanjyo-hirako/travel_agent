@@ -1,13 +1,277 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>travel_agent_fronted</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>旅行规划助手</title>
+    <style>
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        background: #ffffff;
+        transition: background-color 1s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #splash.splash-ready {
+        background-color: #1989fa;
+      }
+
+      #globe-canvas {
+        display: block;
+        background: transparent;
+      }
+
+      #progress-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      #progress-bar {
+        width: 180px;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 1px;
+        overflow: hidden;
+        transition: background 0.6s ease;
+      }
+      #splash.splash-ready #progress-bar {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      #progress-fill {
+        width: 0%;
+        height: 100%;
+        background: #1989fa;
+        border-radius: 1px;
+        transition: background 0.6s ease;
+      }
+      #splash.splash-ready #progress-fill {
+        background: #ffffff;
+      }
+
+      #progress-text {
+        font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: rgba(0, 0, 0, 0.2);
+        transition: color 0.6s ease;
+      }
+      #splash.splash-ready #progress-text {
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      /* Fallback when WebGL unavailable */
+      #fallback-globe {
+        display: none;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(25, 137, 250, 0.3);
+        position: relative;
+      }
+      #fallback-globe::before,
+      #fallback-globe::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(25, 137, 250, 0.15);
+      }
+      #fallback-globe::before {
+        inset: 20% 5%;
+        transform: rotateY(60deg);
+      }
+      #fallback-globe::after {
+        inset: 5%;
+        border-top-color: transparent;
+        border-bottom-color: transparent;
+        transform: rotateX(70deg);
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <!-- Splash Screen -->
+    <div id="splash">
+      <canvas id="globe-canvas"></canvas>
+      <div id="fallback-globe"></div>
+      <div id="progress-wrap">
+        <div id="progress-bar"><div id="progress-fill"></div></div>
+        <div id="progress-text">Loading</div>
+      </div>
+    </div>
+
+    <!-- Vue App (hidden behind splash) -->
+    <div id="app" style="opacity: 0;"></div>
+
+    <!-- Splash initialization -->
+    <script>
+    (function() {
+      var splash = document.getElementById('splash');
+      var canvas = document.getElementById('globe-canvas');
+      var progressFill = document.getElementById('progress-fill');
+      var fallbackGlobe = document.getElementById('fallback-globe');
+
+      var size = Math.min(window.innerWidth * 0.55, window.innerHeight * 0.55);
+      var dpr = Math.min(window.devicePixelRatio, 2);
+
+      // Set canvas CSS dimensions IMMEDIATELY so it's visible
+      canvas.style.width = size + 'px';
+      canvas.style.height = size + 'px';
+      canvas.width = Math.round(size * dpr);
+      canvas.height = Math.round(size * dpr);
+
+      var hasWebGL = (function() {
+        try {
+          var c = document.createElement('canvas');
+          return !!(c.getContext('webgl') || c.getContext('webgl2'));
+        } catch(e) { return false; }
+      })();
+
+      var renderer, scene, camera, globe, animId, material;
+      var colorBlue, colorWhite;
+      var vueReady = false;
+      var progressDone = false;
+      var globeReady = false;
+
+      function showFallback() {
+        canvas.style.display = 'none';
+        fallbackGlobe.style.display = 'block';
+        fallbackGlobe.style.width = size + 'px';
+        fallbackGlobe.style.height = size + 'px';
+      }
+
+      if (!hasWebGL) {
+        showFallback();
+      }
+
+      // Load Three.js from CDN
+      if (hasWebGL) {
+        import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js')
+          .then(function(THREE) {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            camera.position.z = 2.6;
+
+            renderer = new THREE.WebGLRenderer({
+              canvas: canvas,
+              alpha: true,
+              antialias: true
+            });
+            renderer.setPixelRatio(dpr);
+            renderer.setSize(size, size);
+
+            // Wireframe globe using WireframeGeometry for dense wire-mesh look
+            var sphereGeo = new THREE.SphereGeometry(1, 32, 24);
+            var wireGeo = new THREE.WireframeGeometry(sphereGeo);
+            material = new THREE.LineBasicMaterial({
+              color: 0x1989fa,
+              transparent: true,
+              opacity: 0.45
+            });
+            colorBlue = new THREE.Color(0x1989fa);
+            colorWhite = new THREE.Color(0xffffff);
+            globe = new THREE.LineSegments(wireGeo, material);
+            globe.rotation.x = 0.35;
+            scene.add(globe);
+
+            // Render first frame immediately
+            renderer.render(scene, camera);
+            globeReady = true;
+          })
+          .catch(function(err) {
+            console.warn('Three.js load failed, using fallback:', err);
+            showFallback();
+          });
+
+        // Safety fallback: if Three.js hasn't loaded in 6s, show CSS fallback
+        setTimeout(function() {
+          if (!globeReady) showFallback();
+        }, 6000);
+      }
+
+      // Progress bar + animation loop
+      var startTime = performance.now();
+      var duration = 3000;
+
+      function animate() {
+        animId = requestAnimationFrame(animate);
+
+        var elapsed = performance.now() - startTime;
+        var rawProgress = Math.min(1, elapsed / duration);
+        var progress = 1 - Math.pow(1 - rawProgress, 3);
+        progressFill.style.width = (progress * 100) + '%';
+
+        if (progress >= 0.8) splash.classList.add('splash-ready');
+
+        if (rawProgress >= 1 && !progressDone) {
+          progressDone = true;
+          tryDismiss();
+        }
+
+        if (globe && renderer) {
+          globe.rotation.y += 0.006;
+          // Interpolate globe color: blue -> white during 80%-100% progress
+          if (progress > 0.8) {
+            var t = (progress - 0.8) / 0.2;
+            material.color.copy(colorBlue).lerp(colorWhite, t);
+          }
+          renderer.render(scene, camera);
+        }
+      }
+      animate();
+
+      // Handle resize
+      window.addEventListener('resize', function() {
+        var s = Math.min(window.innerWidth * 0.55, window.innerHeight * 0.55);
+        var d = Math.min(window.devicePixelRatio, 2);
+        canvas.style.width = s + 'px';
+        canvas.style.height = s + 'px';
+        canvas.width = Math.round(s * d);
+        canvas.height = Math.round(s * d);
+        if (renderer) renderer.setSize(s, s);
+      });
+
+      window.__splashReady = true;
+
+      function tryDismiss() {
+        if (!progressDone || !vueReady) return;
+        splash.style.transition = 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+        splash.style.opacity = '0';
+        splash.style.pointerEvents = 'none';
+        splash.addEventListener('transitionend', function() {
+          if (animId) cancelAnimationFrame(animId);
+          if (renderer) { renderer.dispose(); renderer.forceContextLoss(); }
+          splash.remove();
+          var app = document.getElementById('app');
+          app.style.transition = 'opacity 0.4s ease';
+          app.style.opacity = '1';
+        }, { once: true });
+      }
+
+      window.addEventListener('splash:done', function() {
+        vueReady = true;
+        tryDismiss();
+      }, { once: true });
+
+      if (window.__vueReady) {
+        vueReady = true;
+        tryDismiss();
+      }
+    })();
+    </script>
+
+    <!-- Vue App Entry -->
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
