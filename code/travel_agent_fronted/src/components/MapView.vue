@@ -16,6 +16,7 @@
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
+import { amapConfig } from '../amap-config.js'
 
 const props = defineProps({
   city: {
@@ -70,11 +71,11 @@ const initMap = async () => {
   try {
     // 配置安全密钥
     window._AMapSecurityConfig = {
-      securityJsCode: 'YOUR_AMAP_SECURITY_CODE', // 替换为实际的安全密钥
+      securityJsCode: amapConfig.securityJsCode,
     }
 
     const AMap = await AMapLoader.load({
-      key: 'YOUR_AMAP_KEY', // 替换为实际的 API Key
+      key: amapConfig.key,
       version: '2.0',
       plugins: ['AMap.Geocoder', 'AMap.InfoWindow']
     })
