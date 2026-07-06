@@ -77,7 +77,10 @@ const quickQuestions = ref([
   '如何选择旅行保险？'
 ])
 //点击标签问题
-const handleClickTag = (q) => {}
+const handleClickTag = (q) => {
+    inputMessage.value = q
+    sendMessage()
+}
 
 //会话数据
 const messages = ref([])
