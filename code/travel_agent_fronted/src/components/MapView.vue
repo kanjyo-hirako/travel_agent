@@ -5,7 +5,12 @@
     </div>
     <div class="map-container" ref="mapContainer"></div>
     <div class="map-legend">
-      <div class="legend-item" v-for="(day, index) in dayColors" :key="index">
+      <div
+        class="legend-item clickable"
+        v-for="(day, index) in dayColors"
+        :key="index"
+        @click="flyToDay(index)"
+      >
         <span class="legend-dot" :style="{ backgroundColor: day.color }"></span>
         <span class="legend-text">第{{ index + 1 }}天</span>
       </div>
@@ -44,6 +49,7 @@ const dayColors = ref([
 let map = null
 let markers = []
 let polylines = []
+let dayMarkers = {} // 按天分组的标记
 
 // 提取景点数据
 const extractSpots = () => {
@@ -92,6 +98,16 @@ const initMap = async () => {
       city: props.city
     })
 
+    // 先定位到城市中心
+    if (props.city) {
+      geocoder.getLocation(props.city, (status, result) => {
+        if (status === 'complete' && result.geocodes.length > 0) {
+          const location = result.geocodes[0].location
+          map.setCenter([location.lng, location.lat])
+        }
+      })
+    }
+
     // 批量地理编码
     const geocodePromises = spots.value.map(spot => {
       return new Promise((resolve) => {
@@ -123,6 +139,7 @@ const initMap = async () => {
     polylines.forEach(polyline => polyline.setMap(null))
     markers = []
     polylines = []
+    dayMarkers = {}
 
     // 按天分组
     const dayGroups = {}
@@ -137,6 +154,7 @@ const initMap = async () => {
     Object.keys(dayGroups).forEach(dayIndex => {
       const daySpots = dayGroups[dayIndex]
       const color = dayColors.value[dayIndex % dayColors.value.length].color
+      dayMarkers[dayIndex] = []
 
       // 绘制路线折线
       if (daySpots.length > 1) {
@@ -189,6 +207,7 @@ const initMap = async () => {
 
         map.add(marker)
         markers.push(marker)
+        dayMarkers[dayIndex].push(marker)
       })
     })
 
@@ -199,6 +218,22 @@ const initMap = async () => {
 
   } catch (error) {
     console.error('地图初始化失败：', error)
+  }
+}
+
+// 点击天数跳转到对应景点
+const flyToDay = (dayIndex) => {
+  if (!map || !dayMarkers[dayIndex] || dayMarkers[dayIndex].length === 0) return
+
+  // 获取该天的所有标记
+  const dayMarkerList = dayMarkers[dayIndex]
+
+  // 调整地图视野，显示该天的所有标记
+  map.setFitView(dayMarkerList)
+
+  // 如果只有一个标记，放大到合适级别
+  if (dayMarkerList.length === 1) {
+    map.setZoom(15)
   }
 }
 
@@ -242,6 +277,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.legend-item.clickable {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.legend-item.clickable:hover {
+  background-color: #f5f5f5;
 }
 
 .legend-dot {
