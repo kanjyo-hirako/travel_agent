@@ -70,6 +70,11 @@
                     <BudgetTable :data="tripData.budgetBreakdown" :total="tripData.totalBudget" />
                 </div>
 
+                <MapView
+                    :city="formData.city"
+                    :daily-itinerary="tripData.dailyItinerary"
+                />
+
                 <div class="card tips-card" v-if="tripData.tips && tripData.tips.length">
                     <div class="section-title">
                         温馨提示
@@ -105,6 +110,7 @@
     import {post} from '../utils/request'
     import SpotItem from '../components/SpotItem.vue'
     import BudgetTable from '../components/BudgetTable.vue'
+    import MapView from '../components/MapView.vue'
     import { addTripFavorite, removeTripFavorite, isTripFavorited, getTripFavoriteId, checkLogin, addTripHistory } from '../utils/auth'
     
     const isloading = ref(true)
