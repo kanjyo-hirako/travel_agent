@@ -7,19 +7,19 @@
     <div class="map-legend">
       <div
         class="legend-item clickable"
-        v-for="(day, index) in dayColors"
-        :key="index"
-        @click="flyToDay(index)"
+        v-for="dayNum in totalDays"
+        :key="dayNum"
+        @click="flyToDay(dayNum - 1)"
       >
-        <span class="legend-dot" :style="{ backgroundColor: day.color }"></span>
-        <span class="legend-text">第{{ index + 1 }}天</span>
+        <span class="legend-dot" :style="{ backgroundColor: getDayColor(dayNum - 1) }"></span>
+        <span class="legend-text">第{{ dayNum }}天</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, computed } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
 import { amapConfig } from '../amap-config.js'
 
@@ -36,15 +36,25 @@ const props = defineProps({
 
 const mapContainer = ref(null)
 const spots = ref([])
-const dayColors = ref([
-  { color: '#ee0a24' },  // 第1天：红色
-  { color: '#1890ff' },  // 第2天：蓝色
-  { color: '#52c41a' },  // 第3天：绿色
-  { color: '#fa8c16' },  // 第4天：橙色
-  { color: '#722ed1' },  // 第5天：紫色
-  { color: '#13c2c2' },  // 第6天：青色
-  { color: '#eb2f96' },  // 第7天：粉色
-])
+const dayColors = [
+  '#ee0a24',  // 第1天：红色
+  '#1890ff',  // 第2天：蓝色
+  '#52c41a',  // 第3天：绿色
+  '#fa8c16',  // 第4天：橙色
+  '#722ed1',  // 第5天：紫色
+  '#13c2c2',  // 第6天：青色
+  '#eb2f96',  // 第7天：粉色
+]
+
+// 计算实际天数
+const totalDays = computed(() => {
+  return props.dailyItinerary.length || 0
+})
+
+// 获取天数颜色
+const getDayColor = (dayIndex) => {
+  return dayColors[dayIndex % dayColors.length]
+}
 
 let map = null
 let markers = []
@@ -153,7 +163,7 @@ const initMap = async () => {
     // 绘制每天的路线和标记
     Object.keys(dayGroups).forEach(dayIndex => {
       const daySpots = dayGroups[dayIndex]
-      const color = dayColors.value[dayIndex % dayColors.value.length].color
+      const color = getDayColor(dayIndex)
       dayMarkers[dayIndex] = []
 
       // 绘制路线折线
@@ -223,10 +233,23 @@ const initMap = async () => {
 
 // 点击天数跳转到对应景点
 const flyToDay = (dayIndex) => {
-  if (!map || !dayMarkers[dayIndex] || dayMarkers[dayIndex].length === 0) return
+  console.log('点击天数:', dayIndex)
+  console.log('地图实例:', map)
+  console.log('dayMarkers:', dayMarkers)
+
+  if (!map) {
+    console.error('地图未初始化')
+    return
+  }
+
+  if (!dayMarkers[dayIndex] || dayMarkers[dayIndex].length === 0) {
+    console.error('该天没有标记:', dayIndex)
+    return
+  }
 
   // 获取该天的所有标记
   const dayMarkerList = dayMarkers[dayIndex]
+  console.log('该天标记数量:', dayMarkerList.length)
 
   // 调整地图视野，显示该天的所有标记
   map.setFitView(dayMarkerList)
