@@ -68,8 +68,13 @@ const initMap = async () => {
   if (!mapContainer.value || spots.value.length === 0) return
 
   try {
+    // 配置安全密钥
+    window._AMapSecurityConfig = {
+      securityJsCode: 'YOUR_AMAP_SECURITY_CODE', // 替换为实际的安全密钥
+    }
+
     const AMap = await AMapLoader.load({
-      key: 'YOUR_AMAP_KEY', // 需要替换为实际的 API Key
+      key: 'YOUR_AMAP_KEY', // 替换为实际的 API Key
       version: '2.0',
       plugins: ['AMap.Geocoder', 'AMap.InfoWindow']
     })
