@@ -59,7 +59,7 @@ const getDayColor = (dayIndex) => {
 let map = null
 let markers = []
 let polylines = []
-let dayMarkers = {} // 按天分组的标记
+const dayMarkers = ref({}) // 按天分组的标记
 
 // 提取景点数据
 const extractSpots = () => {
@@ -149,7 +149,7 @@ const initMap = async () => {
     polylines.forEach(polyline => polyline.setMap(null))
     markers = []
     polylines = []
-    dayMarkers = {}
+    dayMarkers.value = {}
 
     // 按天分组
     const dayGroups = {}
@@ -164,7 +164,7 @@ const initMap = async () => {
     Object.keys(dayGroups).forEach(dayIndex => {
       const daySpots = dayGroups[dayIndex]
       const color = getDayColor(dayIndex)
-      dayMarkers[dayIndex] = []
+      dayMarkers.value[dayIndex] = []
 
       // 绘制路线折线
       if (daySpots.length > 1) {
@@ -217,7 +217,7 @@ const initMap = async () => {
 
         map.add(marker)
         markers.push(marker)
-        dayMarkers[dayIndex].push(marker)
+        dayMarkers.value[dayIndex].push(marker)
       })
     })
 
@@ -235,7 +235,7 @@ const initMap = async () => {
 const flyToDay = (dayIndex) => {
   console.log('点击天数:', dayIndex)
   console.log('地图实例:', map)
-  console.log('dayMarkers:', dayMarkers)
+  console.log('dayMarkers:', dayMarkers.value)
 
   if (!map) {
     console.error('地图未初始化')
@@ -244,13 +244,13 @@ const flyToDay = (dayIndex) => {
 
   // 统一使用字符串类型查找
   const key = String(dayIndex)
-  if (!dayMarkers[key] || dayMarkers[key].length === 0) {
+  if (!dayMarkers.value[key] || dayMarkers.value[key].length === 0) {
     console.error('该天没有标记:', dayIndex)
     return
   }
 
   // 获取该天的所有标记
-  const dayMarkerList = dayMarkers[key]
+  const dayMarkerList = dayMarkers.value[key]
   console.log('该天标记数量:', dayMarkerList.length)
 
   // 调整地图视野，显示该天的所有标记
