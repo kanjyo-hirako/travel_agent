@@ -242,13 +242,15 @@ const flyToDay = (dayIndex) => {
     return
   }
 
-  if (!dayMarkers[dayIndex] || dayMarkers[dayIndex].length === 0) {
+  // 统一使用字符串类型查找
+  const key = String(dayIndex)
+  if (!dayMarkers[key] || dayMarkers[key].length === 0) {
     console.error('该天没有标记:', dayIndex)
     return
   }
 
   // 获取该天的所有标记
-  const dayMarkerList = dayMarkers[dayIndex]
+  const dayMarkerList = dayMarkers[key]
   console.log('该天标记数量:', dayMarkerList.length)
 
   // 调整地图视野，显示该天的所有标记
