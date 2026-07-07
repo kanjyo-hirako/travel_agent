@@ -87,7 +87,7 @@
         />
         <van-cell
           title="版本信息"
-          value="v1.1.0"
+          value="v1.2.0"
         />
       </van-cell-group>
     </div>
@@ -128,7 +128,7 @@ const showAbout = () => {
   showDialog({
     title: '关于我们',
     allowHtml: true,
-    message: '智能旅游助手 v1.1.0<br><br>基于 AI 技术的智能旅游规划平台<br>为您提供个性化的旅游行程推荐<br>和实时旅游咨询服务<br><br>© 2026 智能旅游助手<br><br>更多信息请跳转到<br><a href="https://github.com/kanjyo-hirako/travel_agent" target="_blank" style="color:#1989fa;">https://github.com/kanjyo-hirako/travel_agent</a>',
+    message: '智能旅游助手 v1.2.0<br><br>基于 AI 技术的智能旅游规划平台<br>为您提供个性化的旅游行程推荐<br>和实时旅游咨询服务<br><br>© 2026 智能旅游助手<br><br>更多信息请跳转到<br><a href="https://github.com/kanjyo-hirako/travel_agent" target="_blank" style="color:#1989fa;">https://github.com/kanjyo-hirako/travel_agent</a>',
     confirmButtonText: '知道了'
   }).catch(() => {})
 }
@@ -164,7 +164,7 @@ const handleLogout = () => {
   }).then(() => {
     logout()
     showToast('已退出登录')
-    router.go(0)
+    router.push('/')
   }).catch(() => {})
 }
 </script>
