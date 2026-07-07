@@ -59,6 +59,11 @@
                             <div class="section-label evening">晚上</div>
                             <SpotItem :data="day.evening" :city="formData.city" />
                         </div>
+                        <MapView
+                            :city="formData.city"
+                            :day="day"
+                            :day-index="day.day - 1"
+                        />
                     </div>
                     </van-collapse-item>
                 </van-collapse>
@@ -69,11 +74,6 @@
                     </div>
                     <BudgetTable :data="tripData.budgetBreakdown" :total="tripData.totalBudget" />
                 </div>
-
-                <MapView
-                    :city="formData.city"
-                    :daily-itinerary="tripData.dailyItinerary"
-                />
 
                 <div class="card tips-card" v-if="tripData.tips && tripData.tips.length">
                     <div class="section-title">
@@ -170,17 +170,25 @@
     
     // 获取旅游规划数据
     const fetchTripData = async() => {
+        isloading.value = true
+        errorMsg.value = ''
+        tripData.value = null
+        try {
             const res = await post('recommend',{
                 city: formData.city,
                 budget: formData.budget,
                 days: formData.days
             })
-        isloading.value = false
-        if(res && res.success !=false){
-            tripData.value = res
-            addTripHistory(res)
-        }else{
-            errorMsg.value = res.error
+            if(res && res.success !=false){
+                tripData.value = res
+                addTripHistory(res)
+            }else{
+                errorMsg.value = res.error
+            }
+        } catch (err) {
+            errorMsg.value = err.message || '请求失败，请重试'
+        } finally {
+            isloading.value = false
         }
     }
 
