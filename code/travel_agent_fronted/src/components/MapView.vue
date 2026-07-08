@@ -15,13 +15,28 @@ const isMobile = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 }
 
-// 生成高德地图导航链接（统一使用网页版，兼容所有设备）
-const getAmapNavUrl = (fromLng, fromLat, fromName, toLng, toLat, toName) => {
-  // 如果起点是"我的位置"，不传 from 参数，高德会自动定位当前位置
-  if (fromName === '我的位置') {
-    return `https://uri.amap.com/navigation?to=${toLng},${toLat},${encodeURIComponent(toName)}&mode=car&coordinate=gaode`
+// 调起高德地图导航（移动端优先调起 App）
+const openAmapNavigation = (fromLng, fromLat, fromName, toLng, toLat, toName) => {
+  if (isMobile()) {
+    // 移动端使用 App URI Scheme
+    const appUrl = `amapuri://route/plan/?slat=${fromLat}&slon=${fromLng}&sname=${encodeURIComponent(fromName)}&dlat=${toLat}&dlon=${toLng}&dname=${encodeURIComponent(toName)}&dev=0&t=0`
+    const webUrl = `https://uri.amap.com/navigation?from=${fromLng},${fromLat},${encodeURIComponent(fromName)}&to=${toLng},${toLat},${encodeURIComponent(toName)}&mode=car&coordinate=gaode`
+
+    // 尝试打开 App
+    const start = Date.now()
+    window.location.href = appUrl
+
+    // 如果 1.5 秒后仍在当前页面，说明 App 未安装，跳转网页版
+    setTimeout(() => {
+      if (Date.now() - start < 2000) {
+        window.location.href = webUrl
+      }
+    }, 1500)
+  } else {
+    // PC 端直接打开网页版
+    const webUrl = `https://uri.amap.com/navigation?from=${fromLng},${fromLat},${encodeURIComponent(fromName)}&to=${toLng},${toLat},${encodeURIComponent(toName)}&mode=car&coordinate=gaode`
+    window.open(webUrl, '_blank')
   }
-  return `https://uri.amap.com/navigation?from=${fromLng},${fromLat},${encodeURIComponent(fromName)}&to=${toLng},${toLat},${encodeURIComponent(toName)}&mode=car&coordinate=gaode`
 }
 
 const props = defineProps({
@@ -153,8 +168,7 @@ const initMap = async () => {
             confirmButtonText: '开始导航',
             cancelButtonText: '取消'
           }).then(() => {
-            const url = getAmapNavUrl(from.lng, from.lat, fromName, to.lng, to.lat, toName)
-            window.open(url, '_blank')
+            openAmapNavigation(from.lng, from.lat, fromName, to.lng, to.lat, toName)
           }).catch(() => {})
         })
 
@@ -172,8 +186,7 @@ const initMap = async () => {
         confirmButtonText: '开始导航',
         cancelButtonText: '取消'
       }).then(() => {
-        const url = getAmapNavUrl(0, 0, '我的位置', lng, lat, name)
-        window.open(url, '_blank')
+        openAmapNavigation(0, 0, '我的位置', lng, lat, name)
       }).catch(() => {})
     }
 
