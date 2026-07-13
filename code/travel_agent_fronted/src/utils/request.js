@@ -40,52 +40,53 @@ export function get(url,params){
 
 //处理流式接口
 export async function fetchStream(url,data,onChunk,onComplete,onError){
-    //创建一个请求控制器
     const controller = new AbortController()
 
     try{
-        //发送请求
         const response = await fetch(`${API_BASE}/${url}`,{
             method:'POST',
             headers:{
                 'Content-Type':'application/json'
             },
-                body:JSON.stringify(data),
-                signal:controller.signal
-            })
+            body:JSON.stringify(data),
+            signal:controller.signal
+        })
 
-            //获取响应体可读流的处理器
-            const reader = response.body.getReader()
-            //将二进制数据解码为字符串
-            const decoder = new TextDecoder()
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-            while(true){
-                const {done,value}=await reader.read()
-                if(done) break
-                const chunk = decoder.decode(value,{stream:true})
-                const lines = chunk.split('\n').filter(line=>line.trim())
+        while(true){
+            const {done,value}=await reader.read()
+            if(done) break
 
+            buffer += decoder.decode(value,{stream:true})
+            const events = buffer.split('\n\n')
+            buffer = events.pop() // 保留未完成的部分
+
+            for(const event of events){
+                const lines = event.split('\n').filter(line=>line.trim())
                 for(const line of lines){
-                    console.log(line)
+                    if(!line.startsWith('data:')) continue
                     try{
-                        if(line.startsWith('data:')){
-                            const jsonStr = line.substring(6)
-                            const jsonData = JSON.parse(jsonStr)
+                        const jsonData = JSON.parse(line.substring(5).trim())
                         if(jsonData.type === 'chunk'){
                             onChunk(jsonData.content)
-                        }else if(jsonData.done){
+                        }else if(jsonData.type === 'complete'){
                             onComplete(jsonData.data)
+                        }else if(jsonData.done){
+                            // 流结束信号，不做处理
                         }else if(jsonData.error){
                             onError(jsonData.error)
                         }
-                        }
-                    }catch(error){
-                        onError('流式数据解析异常')
+                    }catch(e){
+                        // 忽略解析失败的行
                     }
                 }
             }
-            return controller.abort()
+        }
+        controller.abort()
     }catch(error){
-        onError(error,message)
+        onError(error.message || '请求失败')
     }
 }

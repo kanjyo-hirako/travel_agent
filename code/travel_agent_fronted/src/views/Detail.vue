@@ -20,9 +20,12 @@
         </div>
         <div class="page-content">
             <div v-if="isloading" class="loading-container">
-                <van-loading size="48px" type="spinner">
-                    正在生成旅游规划...
+                <van-loading size="36px" type="spinner" vertical>
+                    AI 正在为你规划行程...
                 </van-loading>
+                <div v-if="streamingText" class="streaming-preview">
+                    <div class="streaming-text">{{ streamingText }}</div>
+                </div>
             </div>
             <div v-else-if="errorMsg">
                 <van-empty :description="errorMsg">
@@ -107,13 +110,14 @@
     import {onMounted, reactive, ref, computed} from 'vue'
     import {useRouter, useRoute} from 'vue-router'
     import {showToast} from 'vant'
-    import {post} from '../utils/request'
+    import {fetchStream} from '../utils/request'
     import SpotItem from '../components/SpotItem.vue'
     import BudgetTable from '../components/BudgetTable.vue'
     import MapView from '../components/MapView.vue'
     import { addTripFavorite, removeTripFavorite, isTripFavorited, getTripFavoriteId, checkLogin, addTripHistory } from '../utils/auth'
     
     const isloading = ref(true)
+    const streamingText = ref('')
 
     const activeDays = ref([])
 
@@ -168,28 +172,37 @@
         days: null
     })
     
-    // 获取旅游规划数据
+    // 获取旅游规划数据（流式）
     const fetchTripData = async() => {
         isloading.value = true
         errorMsg.value = ''
         tripData.value = null
-        try {
-            const res = await post('recommend',{
-                city: formData.city,
-                budget: formData.budget,
-                days: formData.days
-            })
-            if(res && res.success !=false){
-                tripData.value = res
-                addTripHistory(res)
-            }else{
-                errorMsg.value = res.error
-            }
-        } catch (err) {
-            errorMsg.value = err.message || '请求失败，请重试'
-        } finally {
+        streamingText.value = ''
+
+        await fetchStream('recommend',{
+            city: formData.city,
+            budget: formData.budget,
+            days: formData.days
+        },
+        // onChunk - 实时显示生成内容
+        (chunk) => {
+            streamingText.value += chunk
+        },
+        // onComplete - 收到最终结果
+        (result) => {
             isloading.value = false
-        }
+            if(result && result.success !== false){
+                tripData.value = result
+                addTripHistory(result)
+            }else{
+                errorMsg.value = result?.error || '生成失败，请重试'
+            }
+        },
+        // onError
+        (err) => {
+            isloading.value = false
+            errorMsg.value = typeof err === 'string' ? err : '请求失败，请重试'
+        })
     }
 
     onMounted(() => {
@@ -322,5 +335,24 @@
     .error-card {
         text-align: center;
         padding: 40px 16px;
-    }   
+    }
+
+    .streaming-preview {
+        margin-top: 20px;
+        padding: 12px 16px;
+        background: #f7f8fa;
+        border-radius: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .streaming-text {
+        font-size: 12px;
+        color: #999;
+        line-height: 1.6;
+        word-break: break-all;
+        white-space: pre-wrap;
+    }
 </style>

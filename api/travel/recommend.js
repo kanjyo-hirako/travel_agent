@@ -17,6 +17,15 @@ export default async function handler(req, res) {
         })
     }
 
-    const result = await travelService.recommend(city, budget, days)
-    res.json(result)
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
+
+    const result = await travelService.recommend(city, budget, days, (chunk) => {
+        res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`)
+    })
+
+    res.write(`data: ${JSON.stringify({ type: 'complete', data: result })}\n\n`)
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`)
+    res.end()
 }

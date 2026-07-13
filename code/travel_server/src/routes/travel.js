@@ -12,8 +12,17 @@ router.post('/recommend', async (req, res) => {
             message: '缺少必要参数: city, budget, days'
         })
     }
-    const result = await travelService.recommend(city,budget,days)
-    return res.json(result)
+
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
+
+    const stream = createStreamResponse(res)
+    const result = await travelService.recommend(city,budget,days,(chunk) => {
+        stream.send({type:'chunk',content: chunk})
+    })
+    stream.send({type:'complete',data: result})
+    stream.end()
 })
 
 router.post('/chat', async (req, res) => {

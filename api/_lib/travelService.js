@@ -32,6 +32,31 @@ function createLLM() {
     })
 }
 
+function extractJSON(text) {
+    // 1. 尝试 ```json ... ``` 代码块
+    const codeBlock = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
+    if (codeBlock) {
+        try { return JSON.parse(codeBlock[1].trim()) } catch {}
+    }
+
+    // 2. 括号匹配：找第一个 { 到对应的 }
+    const start = text.indexOf('{')
+    if (start !== -1) {
+        let depth = 0
+        for (let i = start; i < text.length; i++) {
+            if (text[i] === '{') depth++
+            else if (text[i] === '}') depth--
+            if (depth === 0) {
+                try { return JSON.parse(text.slice(start, i + 1)) } catch {}
+                break
+            }
+        }
+    }
+
+    // 3. 直接解析
+    return JSON.parse(text)
+}
+
 function getTravelPrompt(city, budget, days) {
     return [
         new HumanMessage(`你是一个专业的旅游规划师，擅长根据用户的需求生成详细的旅行行程。
@@ -97,7 +122,7 @@ function getTravelPrompt(city, budget, days) {
 }
 
 export const travelService = {
-    async recommend(city, budget, days) {
+    async recommend(city, budget, days, streamCallback) {
         if (budget < 100 || days < 1 || days > 30) {
             return { success: false, error: '预算不低于100元,天数在1-30天之间' }
         }
@@ -112,15 +137,13 @@ export const travelService = {
                 const content = chunk.content || ''
                 if (content.trim()) {
                     fullResponse += content
+                    if (streamCallback) {
+                        streamCallback(content)
+                    }
                 }
             }
 
-            const jsonMatch = fullResponse.match(/```json\n([\s\S]*?)\n```/) ||
-                fullResponse.match(/```\n([\s\S]*?)\n```/) ||
-                fullResponse.match(/(\{[\s\S]*\})/)
-
-            const resData = JSON.parse(jsonMatch[1])
-            return resData
+            return extractJSON(fullResponse)
         } catch (err) {
             return { success: false, error: err.message }
         }

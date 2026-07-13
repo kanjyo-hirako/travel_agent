@@ -1,6 +1,31 @@
-import{ ChatOpenAI } from '@langchain/openai' 
+import{ ChatOpenAI } from '@langchain/openai'
 import { HumanMessage ,SystemMessage} from '@langchain/core/messages'
 import 'dotenv/config'
+
+function extractJSON(text) {
+    // 1. 尝试 ```json ... ``` 代码块
+    const codeBlock = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
+    if (codeBlock) {
+        try { return JSON.parse(codeBlock[1].trim()) } catch {}
+    }
+
+    // 2. 括号匹配：找第一个 { 到对应的 }
+    const start = text.indexOf('{')
+    if (start !== -1) {
+        let depth = 0
+        for (let i = start; i < text.length; i++) {
+            if (text[i] === '{') depth++
+            else if (text[i] === '}') depth--
+            if (depth === 0) {
+                try { return JSON.parse(text.slice(start, i + 1)) } catch {}
+                break
+            }
+        }
+    }
+
+    // 3. 直接解析
+    return JSON.parse(text)
+}
 
 class TravelService {
     constructor() {
@@ -30,7 +55,7 @@ class TravelService {
             streaming:true,
         })
     }
-    async recommend(city,budget,days){
+    async recommend(city,budget,days,streamCallback){
         if(budget<100||days<1||days>30) {
             throw new Error('预算不低于100元,天数在1-30天之间')
         }
@@ -45,16 +70,14 @@ class TravelService {
                 if(content.trim()) {
                     process.stdout.write(content)
                     fullResponse += content
+                    if(streamCallback){
+                        streamCallback(content)
+                    }
                 }
             }
             console.log('')
             try{
-                const jsonMatch = fullResponse.match(/```json\n([\s\S]*?)\n```/) ||
-                    fullResponse.match(/```\n([\s\S]*?)\n```/) ||
-                    fullResponse.match(/(\{[\s\S]*\})/);
-                // 处理后的JSON对象
-                const resData=JSON.parse(jsonMatch[1])
-                return resData
+                return extractJSON(fullResponse)
             }catch(error){
                 return{
                     success:false,
